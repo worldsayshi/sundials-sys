@@ -113,7 +113,7 @@ fn main() {
         }
     }
 
-    link! {"arkode", "cvode", "cvodes", "cvodes", "ida", "idas", "kinsol", "nvecopenmp", "nvecpthreads"}
+    link! {"arkode", "cvode", "cvodes", "ida", "idas", "kinsol", "nvecopenmp", "nvecpthreads"}
 
     // Third, we use bindgen to generate the Rust types
 
