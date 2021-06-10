@@ -1,6 +1,6 @@
 [package]
 name = "sundials-sys"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Jason Dark <email@jkdark.com>", "Arthur Carcano <arthur.carcano@inria.fr>"]
 edition = "2018"
 links = "sundials"
@@ -32,3 +32,6 @@ nvecpthreads = []
 
 [dependencies]
 
+[package.metadata.docs.rs]
+
+features = ["build_libraries", "arkode", "cvode", "cvodes", "ida", "idas", "kinsol", "nvecopenmp", "nvecpthreads"]
