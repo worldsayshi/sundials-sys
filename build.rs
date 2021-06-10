@@ -105,22 +105,15 @@ fn main() {
         );
     }
 
-    for optional_lib_name in &[
-        "arkode",
-        "cvode",
-        "cvodes",
-        "cvodes",
-        "ida",
-        "idas",
-        "kinsol",
-        "nvecopenmp",
-        "nvecpthreads",
-    ] {
-        println!(
-            "cargo:rustc-link-lib={}=sundials_{}",
-            library_type, optional_lib_name
-        );
+    macro_rules! link {
+        ($($s:tt),*) => {
+            $(if cfg!(feature = $s) {
+                println!("cargo:rustc-link-lib={}=sundials_{}", library_type, $s);
+            })*
+        }
     }
+
+    link! {"arkode", "cvode", "cvodes", "cvodes", "ida", "idas", "kinsol", "nvecopenmp", "nvecpthreads"}
 
     // Third, we use bindgen to generate the Rust types
 
