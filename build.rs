@@ -19,16 +19,14 @@ impl bindgen::callbacks::ParseCallbacks for ParseSignedConstants {
 
 // Get environment variable from string
 fn get_env_var(var_name: &str) -> Option<String> {
-    env::vars()
-        .filter_map(|t| {
-            let (key, value) = t;
-            if key == var_name {
-                Some(value)
-            } else {
-                None
-            }
-        })
-        .next()
+    env::vars().find_map(|t| {
+        let (key, value) = t;
+        if key == var_name {
+            Some(value)
+        } else {
+            None
+        }
+    })
 }
 
 fn main() {
