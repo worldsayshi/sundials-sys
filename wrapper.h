@@ -16,7 +16,7 @@
 #include <nvector/nvector_openmp.h>
 #endif
 
-#if USE_CVODE
+#if USE_CVODE & !USE_CVODES
 #include <cvode/cvode.h>
 #endif
 
