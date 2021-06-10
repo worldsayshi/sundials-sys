@@ -62,6 +62,7 @@ fn main() {
             .define("BUILD_SHARED_LIBS", shared_libraries)
             .define("BUILD_TESTING", "OFF")
             .define("EXAMPLES_INSTALL", "OFF")
+            .define("EXAMPLES_ENABLE_C", "OFF")
             .define("BUILD_ARKODE", feature!("arkode"))
             .define("BUILD_CVODE", feature!("cvode"))
             .define("BUILD_CVODES", feature!("cvodes"))
