@@ -14,7 +14,7 @@ keywords = ["ode", "solver", "sundials", "differential"]
 exclude = ["**/*.pdf"]
 
 [build-dependencies]
-bindgen = "0.42.3"
+bindgen = "0.58"
 cmake = "0.1.35"
 
 [features]
