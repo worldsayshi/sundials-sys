@@ -85,10 +85,10 @@ fn main() {
 
     // Second, we let Cargo know about the library files
 
-    match lib_loc {
-        Some(loc) => println!("cargo:rustc-link-search=native={}", loc),
-        None => (),
+    if let Some(loc) = lib_loc {
+        println!("cargo:rustc-link-search=native={}", loc)
     }
+
     println!("cargo:rustc-link-lib={}=sundials_nvecserial", library_type);
     println!(
         "cargo:rustc-link-lib={}=sundials_sunlinsolband",
