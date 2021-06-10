@@ -1,13 +1,16 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
+#![allow(
+    non_upper_case_globals,
+    non_camel_case_types,
+    non_snake_case,
+    improper_ctypes,
+    clippy::all
+)]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(test)]
 mod tests {
     use crate::*;
     use core::ffi::c_void;
-    use std::slice;
 
     #[test]
     // This just tests if the most basic of all programs works. More tests to come soon.
@@ -19,7 +22,7 @@ mod tests {
             _user_data: *mut c_void,
         ) -> i32 {
             *N_VGetArrayPointer(dy) = -*N_VGetArrayPointer(y);
-            return 0;
+            0
         }
 
         unsafe {
