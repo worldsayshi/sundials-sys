@@ -1,4 +1,3 @@
-use cmake::Config;
 use std::env;
 use std::path::PathBuf;
 
@@ -46,19 +45,18 @@ fn main() {
     let shared_libraries = match static_libraries {
         "ON" => "OFF",
         "OFF" => "ON",
-        _ => "ON",
+        _ => unreachable!(),
     };
     let library_type = match static_libraries {
         "ON" => "static",
         "OFF" => "dylib",
-        _ => "static",
+        _ => unreachable!(),
     };
 
-    let mut dst_dir = "".to_owned();
-    let mut lib_loc = Some("".to_owned());
-    let mut inc_dir = Some("".to_owned());
+    let lib_loc;
+    let inc_dir;
     if cfg!(feature = "build_libraries") {
-        let dst = Config::new("vendor")
+        let dst = cmake::Config::new("vendor")
             .define("CMAKE_INSTALL_LIBDIR", "lib")
             .define("BUILD_STATIC_LIBS", static_libraries)
             .define("BUILD_SHARED_LIBS", shared_libraries)
@@ -73,9 +71,9 @@ fn main() {
             .define("OPENMP_ENABLE", feature!("nvecopenmp"))
             .define("PTHREAD_ENABLE", feature!("nvecpthreads"))
             .build();
-        dst_dir = format!("{}", dst.display());
-        lib_loc = Some(format!("{}/lib", dst_dir));
-        inc_dir = Some(format!("{}/include", dst_dir));
+        let dst_disp = dst.display();
+        lib_loc = Some(format!("{}/lib", dst_disp));
+        inc_dir = Some(format!("{}/include", dst_disp));
     } else {
         lib_loc = get_env_var("SUNDIALS_LIBRARY_DIR");
         inc_dir = get_env_var("SUNDIALS_INCLUDE_DIR");
@@ -86,65 +84,43 @@ fn main() {
     if let Some(loc) = lib_loc {
         println!("cargo:rustc-link-search=native={}", loc)
     }
-
-    println!("cargo:rustc-link-lib={}=sundials_nvecserial", library_type);
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunlinsolband",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunlinsoldense",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunlinsolpcg",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunlinsolspbcgs",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunlinsolspfgmr",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunlinsolspgmr",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunlinsolsptfqmr",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunmatrixband",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunmatrixdense",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunmatrixsparse",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunnonlinsolfixedpoint",
-        library_type
-    );
-    println!(
-        "cargo:rustc-link-lib={}=sundials_sunnonlinsolnewton",
-        library_type
-    );
-
-    macro_rules! link {
-        ($($s:tt),*) => {
-            $(if cfg!(feature = $s) {
-                println!("cargo:rustc-link-lib={}=sundials_{}", library_type, $s);
-            })*
-        }
+    for lib_name in &[
+        "nvecserial",
+        "sunlinsolband",
+        "sunlinsoldense",
+        "sunlinsolpcg",
+        "sunlinsolspbcgs",
+        "sunlinsolspfgmr",
+        "sunlinsolspgmr",
+        "sunlinsolsptfqmr",
+        "sunmatrixband",
+        "sunmatrixdense",
+        "sunmatrixsparse",
+        "sunnonlinsolfixedpoint",
+        "sunnonlinsolnewton",
+    ] {
+        println!(
+            "cargo:rustc-link-lib={}=sundials_{}",
+            library_type, lib_name
+        );
     }
-    link! {"arkode", "cvode", "cvodes", "cvodes", "ida", "idas", "kinsol", "nvecopenmp", "nvecpthreads"}
+
+    for optional_lib_name in &[
+        "arkode",
+        "cvode",
+        "cvodes",
+        "cvodes",
+        "ida",
+        "idas",
+        "kinsol",
+        "nvecopenmp",
+        "nvecpthreads",
+    ] {
+        println!(
+            "cargo:rustc-link-lib={}=sundials_{}",
+            library_type, optional_lib_name
+        );
+    }
 
     // Third, we use bindgen to generate the Rust types
 
