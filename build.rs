@@ -18,8 +18,7 @@ impl bindgen::callbacks::ParseCallbacks for ParseSignedConstants {
 
 // Get environment variable from string
 fn get_env_var(var_name: &str) -> Option<String> {
-    env::vars().find_map(|t| {
-        let (key, value) = t;
+    env::vars().find_map(|(key, value)| {
         if key == var_name {
             Some(value)
         } else {
@@ -42,14 +41,9 @@ fn main() {
     }
 
     let static_libraries = feature!("static_libraries");
-    let shared_libraries = match static_libraries {
-        "ON" => "OFF",
-        "OFF" => "ON",
-        _ => unreachable!(),
-    };
-    let library_type = match static_libraries {
-        "ON" => "static",
-        "OFF" => "dylib",
+    let (shared_libraries, library_type) = match static_libraries {
+        "ON" => ("OFF", "static"),
+        "OFF" => ("ON", "dylib"),
         _ => unreachable!(),
     };
 
