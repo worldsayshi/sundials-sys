@@ -27,9 +27,8 @@ fn get_env_var(var_name: &str) -> Option<String> {
     })
 }
 
-fn main() {
-    // First, we build the SUNDIALS library, with requested modules with CMake
-
+/// Build the Sundials code vendored with sundials-sys.
+fn build_vendored_sundials() -> (Option<String>, Option<String>, &'static str) {
     macro_rules! feature {
         ($s:tt) => {
             if cfg!(feature = $s) {
@@ -47,28 +46,37 @@ fn main() {
         _ => unreachable!(),
     };
 
+    let dst = cmake::Config::new("vendor")
+        .define("CMAKE_INSTALL_LIBDIR", "lib")
+        .define("BUILD_STATIC_LIBS", static_libraries)
+        .define("BUILD_SHARED_LIBS", shared_libraries)
+        .define("BUILD_TESTING", "OFF")
+        .define("EXAMPLES_INSTALL", "OFF")
+        .define("EXAMPLES_ENABLE_C", "OFF")
+        .define("BUILD_ARKODE", feature!("arkode"))
+        .define("BUILD_CVODE", feature!("cvode"))
+        .define("BUILD_CVODES", feature!("cvodes"))
+        .define("BUILD_IDA", feature!("ida"))
+        .define("BUILD_IDAS", feature!("idas"))
+        .define("BUILD_KINSOL", feature!("kinsol"))
+        .define("OPENMP_ENABLE", feature!("nvecopenmp"))
+        .define("PTHREAD_ENABLE", feature!("nvecpthreads"))
+        .build();
+    let dst_disp = dst.display();
+    let lib_loc = Some(format!("{}/lib", dst_disp));
+    let inc_dir = Some(format!("{}/include", dst_disp));
+    (lib_loc, inc_dir, library_type)
+}
+
+
+fn main() {
+    // First, we build the SUNDIALS library, with requested modules with CMake
+
     let lib_loc;
     let inc_dir;
+    let mut library_type = "dylib";
     if cfg!(feature = "build_libraries") {
-        let dst = cmake::Config::new("vendor")
-            .define("CMAKE_INSTALL_LIBDIR", "lib")
-            .define("BUILD_STATIC_LIBS", static_libraries)
-            .define("BUILD_SHARED_LIBS", shared_libraries)
-            .define("BUILD_TESTING", "OFF")
-            .define("EXAMPLES_INSTALL", "OFF")
-            .define("EXAMPLES_ENABLE_C", "OFF")
-            .define("BUILD_ARKODE", feature!("arkode"))
-            .define("BUILD_CVODE", feature!("cvode"))
-            .define("BUILD_CVODES", feature!("cvodes"))
-            .define("BUILD_IDA", feature!("ida"))
-            .define("BUILD_IDAS", feature!("idas"))
-            .define("BUILD_KINSOL", feature!("kinsol"))
-            .define("OPENMP_ENABLE", feature!("nvecopenmp"))
-            .define("PTHREAD_ENABLE", feature!("nvecpthreads"))
-            .build();
-        let dst_disp = dst.display();
-        lib_loc = Some(format!("{}/lib", dst_disp));
-        inc_dir = Some(format!("{}/include", dst_disp));
+        (lib_loc, inc_dir, library_type) = build_vendored_sundials();
     } else {
         lib_loc = get_env_var("SUNDIALS_LIBRARY_DIR");
         inc_dir = get_env_var("SUNDIALS_INCLUDE_DIR");
