@@ -8,9 +8,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [stable, beta, nightly, linux32, macos, aarch64-ios, win64, windows-latest]
+        build: [stable, stable-vendor, beta, nightly, linux32, macos, aarch64-ios, win64, win64-vendor, windows-latest]
         include:
           - build: stable
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+          - build: stable-vendor
             os: ubuntu-latest
             rust: stable
             target: x86_64-unknown-linux-gnu
@@ -42,6 +46,10 @@ jobs:
             os: windows-latest
             rust: stable
             target: x86_64-pc-windows-msvc
+          - build: win64-vendor
+            os: windows-latest
+            rust: stable
+            target: x86_64-pc-windows-msvc
           - build: windows-latest
             os: windows-latest
             rust: stable-x86_64
@@ -51,16 +59,20 @@ jobs:
     - run: git submodule init
     - run: git submodule update
     - name: Set up vcpkg on Windows
-      if: startsWith(matrix.os, 'windows')
+      if: startsWith(matrix.os, 'windows') && ! contains(matrix.build, 'vendor')
       run: |
         git clone https://github.com/microsoft/vcpkg
         & .\vcpkg\bootstrap-vcpkg.bat
         & .\vcpkg\vcpkg install sundials --triplet=x64-windows
+    - name: Install Ubuntu packages
+      if: startsWith(matrix.os, 'ubuntu') && ! contains(matrix.build, 'vendor')
+      run: |
+        sudo apt-get -y install libsundials-dev
     - name: Install Rust (rustup)
       run: rustup update ${{ matrix.rust }} --no-self-update && rustup default ${{ matrix.rust }}
       shell: bash
     - run: rustup target add ${{ matrix.target }}
-    - run: cargo build --features build_libraries
+    - run: cargo build
     - run: cargo test
       if: startsWith(matrix.os, 'ubuntu')
 
