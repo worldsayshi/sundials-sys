@@ -50,17 +50,18 @@ jobs:
     - uses: actions/checkout@master
     - run: git submodule init
     - run: git submodule update
-    - name: Set up Clang on Windows
+    - name: Set up vcpkg on Windows
       if: startsWith(matrix.os, 'windows')
       run: |
-        $choco = Get-Command 'choco'
-        & $choco upgrade llvm -y --no-progress
+        git clone https://github.com/microsoft/vcpkg
+        & .\vcpkg\bootstrap-vcpkg.bat
+        & .\vcpkg\vcpkg install sundials --triplet=x64-windows
     - name: Install Rust (rustup)
       run: rustup update ${{ matrix.rust }} --no-self-update && rustup default ${{ matrix.rust }}
       shell: bash
     - run: rustup target add ${{ matrix.target }}
     - run: cargo build --features build_libraries
-    - run: cargo test --features build_libraries
+    - run: cargo test
       if: startsWith(matrix.os, 'ubuntu')
 
 
