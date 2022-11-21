@@ -72,14 +72,27 @@ fn build_vendored_sundials() -> (Option<String>, Option<String>, &'static str) {
 fn main() {
     // First, we build the SUNDIALS library, with requested modules with CMake
 
-    let lib_loc;
-    let inc_dir;
+    let mut lib_loc;
+    let mut inc_dir;
     let mut library_type = "dylib";
     if cfg!(feature = "build_libraries") {
         (lib_loc, inc_dir, library_type) = build_vendored_sundials();
     } else {
         lib_loc = get_env_var("SUNDIALS_LIBRARY_DIR");
         inc_dir = get_env_var("SUNDIALS_INCLUDE_DIR");
+    }
+
+    if lib_loc.is_none() && inc_dir.is_none() {
+        // No path specified, try to detect if the library is present
+        // on the system.
+        if cfg!(target_os = "windows") {
+            let vcpkg = vcpkg::Config::new()
+                .emit_includes(true)
+                .find_package("sundials");
+            if vcpkg.is_err() {
+                (lib_loc, inc_dir, library_type) = build_vendored_sundials();
+            }
+        }
     }
 
     // Second, we let Cargo know about the library files

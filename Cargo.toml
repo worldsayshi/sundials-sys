@@ -16,6 +16,7 @@ exclude = ["**/*.pdf","vendor/examples"]
 [build-dependencies]
 bindgen = "0.58"
 cmake = "0.1.35"
+vcpkg = "0.2.15"
 
 [features]
 default = ["arkode", "cvode", "ida", "kinsol"]
