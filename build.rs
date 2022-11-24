@@ -112,10 +112,11 @@ fn main() {
     if lib_loc.is_none() && inc_dir.is_none() {
         // No path specified, try to detect if the library is present
         // on the system.
-        if cfg!(target_family = "unix") {
+        #[cfg(target_family = "unix")] {
             // Try to find Sundials header files.
             let std_inc = ["/usr/local/include/", "/usr/include/",
-                           "/usr/include/x86_64-linux-gnu"];
+                           "/usr/include/x86_64-linux-gnu",
+                           "/usr/local/Cellar"];
             let predicate = |s: &OsString| {
                 s == "nvector_serial.h" };
             let found = std_inc.iter().any(|d| {
@@ -123,14 +124,16 @@ fn main() {
             if ! found {
                 (lib_loc, inc_dir, library_type) = build_vendored_sundials();
             }
-        } else if cfg!(target_family = "windows") {
+        }
+        #[cfg(target_family = "windows")] {
             let vcpkg = vcpkg::Config::new()
                 .emit_includes(true)
                 .find_package("sundials");
             if vcpkg.is_err() {
                 (lib_loc, inc_dir, library_type) = build_vendored_sundials();
             }
-        } else {
+        }
+        #[cfg(target_family = "wasm")] {
             (lib_loc, inc_dir, library_type) = build_vendored_sundials();
         }
     }
