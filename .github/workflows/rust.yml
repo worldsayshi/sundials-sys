@@ -74,7 +74,3 @@ jobs:
     - run: rustup target add ${{ matrix.target }}
     - run: cargo build
     - run: cargo test
-      if: startsWith(matrix.os, 'ubuntu')
-
-
-
