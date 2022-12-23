@@ -1,6 +1,6 @@
-use std::{ffi::OsString,
-          env, fs,
-          path::{PathBuf, Path}};
+use std::{env,
+          path::PathBuf};
+use bindgen::Bindings;
 
 // SUNDIALS has a few non-negative constants that need to be parsed as an i32.
 // This is an attempt at doing so generally.
@@ -69,30 +69,35 @@ fn build_vendored_sundials() -> (Option<String>, Option<String>, &'static str) {
     (lib_loc, inc_dir, library_type)
 }
 
-/// Return `Ok(true)` if `dir` contains a regular file such that
-/// `predicate` returns `true`.
-fn is_in_dir<P>(dir: impl AsRef<Path>, mut predicate: P) -> std::io::Result<bool>
-where P: FnMut(&OsString) -> bool {
-    let mut dirs = Vec::new();
-    dirs.push(dir.as_ref().to_owned());
-    while let Some(dir) = dirs.pop() {
-        let entries = match fs::read_dir(dir) {
-            Ok(e) => e,
-            Err(_) => continue };
-        for entry in entries {
-            let entry = entry?;
-            let ty = entry.file_type()?;
-            if ty.is_file() {
-                if predicate(&entry.file_name()) {
-                    return Ok(true)
-                }
-            } else if ty.is_dir() {
-                dirs.push(entry.path())
-            }
-            // Ignore symlinks
-        }
+fn generate_bindings(inc_dir: &Option<String>) -> Result<Bindings, ()> {
+    macro_rules! define {
+        ($a:tt, $b:tt) => {
+            format!(
+                "-DUSE_{}={}",
+                stringify!($b),
+                if cfg!(feature = $a) { 1 } else { 0 }
+            )
+        };
     }
-    Ok(false)
+
+    bindgen::Builder::default()
+        .header("wrapper.h")
+        .clang_arg(match inc_dir {
+            Some(dir) => format!("-I{}", dir),
+            None => "".to_owned(),
+        })
+        .clang_args(&[
+            define!("arkode", ARKODE),
+            define!("cvode", CVODE),
+            define!("cvodes", CVODES),
+            define!("ida", IDA),
+            define!("idas", IDAS),
+            define!("kinsol", KINSOL),
+            define!("nvecopenmp", OPENMP),
+            define!("nvecpthreads", PTHREADS),
+        ])
+        .parse_callbacks(Box::new(ParseSignedConstants))
+        .generate()
 }
 
 
@@ -110,21 +115,6 @@ fn main() {
     }
 
     if lib_loc.is_none() && inc_dir.is_none() {
-        // No path specified, try to detect if the library is present
-        // on the system.
-        #[cfg(target_family = "unix")] {
-            // Try to find Sundials header files.
-            let std_inc = ["/usr/local/include/", "/usr/include/",
-                           "/usr/include/x86_64-linux-gnu",
-                           "/usr/local/Cellar"];
-            let predicate = |s: &OsString| {
-                s == "nvector_serial.h" };
-            let found = std_inc.iter().any(|d| {
-                is_in_dir(d, predicate).unwrap() });
-            if ! found {
-                (lib_loc, inc_dir, library_type) = build_vendored_sundials();
-            }
-        }
         #[cfg(target_family = "windows")] {
             let vcpkg = vcpkg::Config::new()
                 .emit_includes(true)
@@ -133,12 +123,23 @@ fn main() {
                 (lib_loc, inc_dir, library_type) = build_vendored_sundials();
             }
         }
-        #[cfg(target_family = "wasm")] {
-            (lib_loc, inc_dir, library_type) = build_vendored_sundials();
-        }
     }
 
-    // Second, we let Cargo know about the library files
+    // Second, we use bindgen to generate the Rust types
+
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    if let Ok(bindings) = generate_bindings(&inc_dir) {
+        bindings.write_to_file(out_path.join("bindings.rs"))
+            .expect("Couldn't write bindings!");
+    } else {
+        (lib_loc, inc_dir, library_type) = build_vendored_sundials();
+        generate_bindings(&inc_dir)
+            .expect("Unable to generate bindings")
+            .write_to_file(out_path.join("bindings.rs"))
+            .expect("Couldn't write bindings!");
+    }
+
+    // Third, we let Cargo know about the library files
 
     if let Some(loc) = lib_loc {
         println!("cargo:rustc-link-search=native={}", loc)
@@ -172,42 +173,8 @@ fn main() {
         }
     }
 
-    link! {"arkode", "cvode", "cvodes", "ida", "idas", "kinsol", "nvecopenmp", "nvecpthreads"}
-
-    // Third, we use bindgen to generate the Rust types
-
-    macro_rules! define {
-        ($a:tt, $b:tt) => {
-            format!(
-                "-DUSE_{}={}",
-                stringify!($b),
-                if cfg!(feature = $a) { 1 } else { 0 }
-            )
-        };
-    }
-
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindgen::Builder::default()
-        .header("wrapper.h")
-        .clang_arg(match inc_dir {
-            Some(dir) => format!("-I{}", dir),
-            None => "".to_owned(),
-        })
-        .clang_args(&[
-            define!("arkode", ARKODE),
-            define!("cvode", CVODE),
-            define!("cvodes", CVODES),
-            define!("ida", IDA),
-            define!("idas", IDAS),
-            define!("kinsol", KINSOL),
-            define!("nvecopenmp", OPENMP),
-            define!("nvecpthreads", PTHREADS),
-        ])
-        .parse_callbacks(Box::new(ParseSignedConstants))
-        .generate()
-        .expect("Unable to generate bindings")
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
+    link! {"arkode", "cvode", "cvodes", "ida", "idas", "kinsol",
+           "nvecopenmp", "nvecpthreads"}
 
     // And that's all.
 }
