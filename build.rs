@@ -107,7 +107,7 @@ fn main() {
     let mut lib_loc;
     let mut inc_dir;
     let mut library_type = "dylib";
-    if cfg!(feature = "build_libraries") {
+    if cfg!(any(feature = "build_libraries", target_family = "wasm")) {
         (lib_loc, inc_dir, library_type) = build_vendored_sundials();
     } else {
         lib_loc = get_env_var("SUNDIALS_LIBRARY_DIR");
