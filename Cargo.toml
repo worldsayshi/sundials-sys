@@ -17,6 +17,9 @@ exclude = ["**/*.pdf","vendor/examples"]
 bindgen = "0.58"
 cmake = "0.1.35"
 
+[target.'cfg(target_env = "msvc")'.build-dependencies]
+vcpkg = "0.2.15"
+
 [features]
 default = ["arkode", "cvode", "ida", "kinsol"]
 static_libraries = []
