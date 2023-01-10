@@ -67,7 +67,7 @@ jobs:
     - name: Install Ubuntu packages
       if: startsWith(matrix.os, 'ubuntu') && ! contains(matrix.build, 'vendor')
       run: |
-        sudo apt-get -y install libsundials-dev
+        sudo apt-get update && sudo apt-get -y install libsundials-dev
     - name: Install Rust (rustup)
       run: rustup update ${{ matrix.rust }} --no-self-update && rustup default ${{ matrix.rust }}
       shell: bash
