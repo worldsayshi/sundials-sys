@@ -1,6 +1,6 @@
 # sundials-sys
 
-A barebones `-sys` crate around the [SUNDIALS](https://computation.llnl.gov/projects/sundials) suite of ODE solvers. The system must have CMake (`cmake` dependency) and clang (`bindgen` dependency) already installed for compilation to succeed.
+A barebones `-sys` crate around the [SUNDIALS](https://computing.llnl.gov/projects/sundials) suite of ODE solvers. The system must have CMake (`cmake` dependency) and clang (`bindgen` dependency) already installed for compilation to succeed.
 
 ## System Dependencies
 
@@ -48,7 +48,7 @@ Alternatively, you may use [Chocolatey][] to install [cmake][] and
 
 ## License
 
-The license and copyright information for the SUNDIALS suite can be viewed [here](https://computation.llnl.gov/projects/sundials/license). At the time of writing, it is a BSD 3-Clause license. The code specific to this crate is also made available under the BSD 3-Clause license.
+The license and copyright information for the SUNDIALS suite can be viewed [here](https://computing.llnl.gov/projects/sundials/license). At the time of writing, it is a BSD 3-Clause license. The code specific to this crate is also made available under the BSD 3-Clause license.
 
 ## Versions
 * 0.2.0 — Make compilation of sundials optional (allowing to link against the system library). Add static library option.
